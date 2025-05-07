@@ -145,31 +145,6 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
         
 	}
 
-    public void move() {
-        //bird
-        velocityY += gravity;
-        bird.y += velocityY;
-        bird.y = Math.max(bird.y, 0); //apply gravity to current bird.y, limit the bird.y to top of the canvas
-
-        //pipes
-        for (int i = 0; i < pipes.size(); i++) {
-            Pipe pipe = pipes.get(i);
-            pipe.x += velocityX;
-
-            if (!pipe.passed && bird.x > pipe.x + pipe.width) {
-                score += 0.5; //0.5 because there are 2 pipes! so 0.5*2 = 1, 1 for each set of pipes
-                pipe.passed = true;
-            }
-
-            if (collision(bird, pipe)) {
-                gameOver = true;
-            }
-        }
-
-        if (bird.y > boardHeight) {
-            gameOver = true;
-        }
-    }
 
     boolean collision(Bird a, Pipe b) {
         return a.x < b.x + b.width &&   //a's top left corner doesn't reach b's top right corner
@@ -186,7 +161,41 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
             placePipeTimer.stop();
             gameLoop.stop();
         }
-    }  
+    }
+
+    void move() {
+        // Update bird's position
+        bird.y += velocityY;
+        velocityY += gravity;
+
+        // Update pipes' positions
+        for (int i = 0; i < pipes.size(); i++) {
+            Pipe pipe = pipes.get(i);
+            pipe.x += velocityX;
+
+            // Check for collision
+            if (collision(bird, pipe)) {
+                gameOver = true;
+            }
+
+            // Remove pipes that move out of the screen
+            if (pipe.x + pipe.width < 0) {
+                pipes.remove(i);
+                i--;
+            }
+
+            // Update score when bird passes a pipe
+            if (!pipe.passed && pipe.x + pipe.width < bird.x) {
+                pipe.passed = true;
+                score += 0.5; // Increment score by 0.5 for each pair of pipes
+            }
+        }
+
+        // Check if bird hits the ground or flies out of the screen
+        if (bird.y + bird.height > boardHeight || bird.y < 0) {
+            gameOver = true;
+        }
+    }
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -213,4 +222,14 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void keyReleased(KeyEvent e) {}
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Flappy Bird");
+        FlappyBird game = new FlappyBird();
+
+        frame.add(game);
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setResizable(false);
+        frame.setVisible(true);
+    }
 }
